@@ -5,8 +5,8 @@
 #include <sstream>
 #include <sys/wait.h>
 #include <sys/time.h>
-#include <sys/resource.h> 
-#include <set> 
+#include <sys/resource.h>
+#include <set>
 
 #include "ORDataProcManager.hh"
 #include "ORFileReader.hh"
@@ -29,7 +29,7 @@ static const char Usage[] =
 "Usage: orcaroot [options] [input file(s) / socket host:port]\n"
 "\n"
 "The one required argument is either the name of a file to be processed or\n"
-"a host and port of a socket from which to read data. For a file, you may\n"
+"a host and port of a socket from which to read data. For a file, you may either\n"
 "enter a series of files to be processed, or use a wildcard like \"file*.dat\"\n"
 "For a socket, the argument should be formatted as host:port.\n"
 "\n"
@@ -42,8 +42,8 @@ static const char Usage[] =
 "    Wait [time] (default 10) seconds between connection attempts.\n"
 "  --maxreconnect [num] : Maximum [num] socket reconnect attempts.\n"
 "    A [num] value of 0 sets this to infinity (i.e. no timeout).\n"
-"  --daemon [port] : Runs as a server accepting connections on [port]. \n" 
-"  --connections [num] : Maximum [num] connections accepted by server. \n" 
+"  --daemon [port] : Runs as a server accepting connections on [port]. \n"
+"  --connections [num] : Maximum [num] connections accepted by server. \n"
 "\n"
 "Example usage:\n"
 "orcaroot run194ecpu\n"
@@ -58,7 +58,7 @@ static const char Usage[] =
 "  Rootify orca stream on host 128.95.100.213, port 44666 with default verbosity,\n"
 "  output file label, etc.\n"
 "orcaroot --daemon 9090 --connections 10\n"
-"  Start orcaroot as a server on port 9090, accepting a maximum number of 10 connections.\n" 
+"  Start orcaroot as a server on port 9090, accepting a maximum number of 10 connections.\n"
 "\n"
 "\n";
 
@@ -86,11 +86,11 @@ class ORSIS3302TreeWriter : public ORVTreeWriter
       fStart = fRunContext->GetStartTime();
       fChannel = f3302Decoder->GetChannelNum();
       if(fPeakingTime == 0) {
-        fPeakingTime = f3302Decoder->GetPeakingTime(f3302Decoder->CrateOf(record), 
-                                                    f3302Decoder->CardOf(record), 
+        fPeakingTime = f3302Decoder->GetPeakingTime(f3302Decoder->CrateOf(record),
+                                                    f3302Decoder->CardOf(record),
                                                     fChannel);
       }
-      
+
       size_t nSamples = f3302Decoder->GetWaveformLen();
       vector<double> waveform(nSamples);
       f3302Decoder->CopyWaveformDataDouble(&(waveform[0]), nSamples);
@@ -99,7 +99,7 @@ class ORSIS3302TreeWriter : public ORVTreeWriter
       for (int i = 0; i < nSamples; i++) {
         if (waveform[i] < min) {
           min = waveform[i];
-        } 
+        }
         if (waveform[i] > max) {
           max = waveform[i];
         }
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
         else if(strcmp(optarg, "error") == 0) ORLogger::SetSeverity(ORLogger::kError);
         else if(strcmp(optarg, "fatal") == 0) ORLogger::SetSeverity(ORLogger::kFatal);
         else {
-          ORLog(kWarning) << "Unknown verbosity setting " << optarg 
+          ORLog(kWarning) << "Unknown verbosity setting " << optarg
                           << "; using kRoutine" << endl;
           ORLogger::SetSeverity(ORLogger::kRoutine);
         }
@@ -227,11 +227,11 @@ int main(int argc, char** argv)
     ORLog(kRoutine) << "Running orcaroot as daemon on port: " << portToListenOn << endl;
     pid_t childpid = 0;
     std::set<pid_t> childPIDRecord;
-    
+
     ORServer* server = new ORServer(portToListenOn);
     /* Starting server, binding to a port. */
     if (!server->IsValid()) {
-      ORLog(kError) << "Error listening on port " << portToListenOn 
+      ORLog(kError) << "Error listening on port " << portToListenOn
         << endl << "Error code: " << server->GetErrorCode() << endl;
       return 1;
     }
@@ -240,28 +240,28 @@ int main(int argc, char** argv)
        * by the server.  The kill signal will automatically propagate to the
        * children so we really don't have to worry about waiting for them to
        * die.  */
-      while (childPIDRecord.size() >= maxConnections) { 
+      while (childPIDRecord.size() >= maxConnections) {
         /* We've reached our maximum number of child processes. */
         /* Wait for a process to end. */
         childpid = wait3(0, WUNTRACED, 0);
         if(childPIDRecord.erase(childpid) != 1) {
           /* Something really weird happened. */
-          ORLog(kError) << "Ended child process " << childpid 
+          ORLog(kError) << "Ended child process " << childpid
             << " not recognized!" << endl;
         }
       }
       while((childpid = wait3(0,WNOHANG,0)) > 0) {
-        /* Cleaning up any children that may have ended.                   * 
+        /* Cleaning up any children that may have ended.                   *
          * This will just go straight through if no children have stopped. */
         if(childPIDRecord.erase(childpid) != 1) {
           /* Something really weird happened. */
-          ORLog(kError) << "Ended child process " << childpid 
+          ORLog(kError) << "Ended child process " << childpid
             << " not recognized!" << endl;
         }
-      } 
+      }
       ORLog(kRoutine) << childPIDRecord.size()  << " connections running..." << endl;
       ORLog(kRoutine) << "Waiting for connection..." << endl;
-      TSocket* sock = server->Accept(); 
+      TSocket* sock = server->Accept();
       if (sock == (TSocket*) 0 || sock == (TSocket*) -1 ) {
         // There was an error, or the socket got closed .
         if (!server->IsValid()) return 0;
@@ -281,12 +281,12 @@ int main(int argc, char** argv)
         reader = new ORSocketReader(sock, true);
         /* Get out of the while loop */
         break;
-      } 
+      }
       /* Parent process: wait for next connection. Close our descriptor. */
-      ORLog(kRoutine) << "Connection accepted, child process begun with pid: " 
+      ORLog(kRoutine) << "Connection accepted, child process begun with pid: "
         << childpid << endl;
       childPIDRecord.insert(childpid);
-      delete sock; 
+      delete sock;
     }
   /***************************************************************************/
   /*  End daemon server code.  */
@@ -301,7 +301,7 @@ int main(int argc, char** argv)
         ((ORFileReader*) reader)->AddFileToProcess(argv[i]);
       }
     } else {
-      reader = new ORSocketReader(readerArg.substr(0, iColon).c_str(), 
+      reader = new ORSocketReader(readerArg.substr(0, iColon).c_str(),
                                   atoi(readerArg.substr(iColon+1).c_str()));
       //((ORSocketReader*)reader)->SetKeepAlive(keepAliveSocket);
       //((ORSocketReader*)reader)->SetSleepTime(timeToSleep);
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
         tempString << reconnectAttempts;
         ORLog(kRoutine) << "Setting socket to stay alive: " << endl
           << "Sleep time: " << timeToSleep << " seconds" << endl
-          << "Reconnect attempts: " 
+          << "Reconnect attempts: "
           << ((reconnectAttempts == 0) ? "infinite" : tempString.str())
           << endl;
       }*/
@@ -350,4 +350,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
