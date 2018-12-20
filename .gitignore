@@ -1,0 +1,4 @@
+getSpectrum
+logs/*
+*.root
+calibration/Calibration
