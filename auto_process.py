@@ -8,7 +8,7 @@ from shutil import move
 import time
 import datetime as datetime
 import numpy as np
-from sense_hat import SenseHat
+# from sense_hat import SenseHat
 
 def main(argv):
     """
@@ -16,14 +16,7 @@ def main(argv):
     Uses "runDB.json" as a database.  When a crystal is scanned,
     we input its serial number and run numbers to the database,
     and run this code to process the data and handle the output files.
-    Usage:
-    $ python auto_process.py [options]
-        default (no arguments): process all runs on this computer
-        -temp
-        -zip : run on cenpa-rocks and gzip all unzipped raw files
-        -crys [serial no]: process data from a particular crystal
-        -sync : upload data to cenpa-rocks and delete the raw ORCA files
-        -ovr : overwrite ROOT output files
+    For usage help, run: $ python auto_process.py -h
     """
     # -- load our run database and make it global --
     global runDB
@@ -33,37 +26,40 @@ def main(argv):
     # -- parse args --
     par = argparse.ArgumentParser(description="coherent crystal characterization suite")
     arg = par.add_argument
-    arg("-o", "--ovr", action="store_true", help="overwrite existing files")
     arg("-c", "--crys", type=str, help="set crystal S/N")
-
+    arg("-p", "--proc", type=str, help="process a crystal")
+    arg("-a", "--all", type=str, help="process all crystals in the DB")
+    arg("-o", "--over", action="store_true", help="overwrite existing files")
+    arg("-t", "--temp", action="store_true", help='start temperature data taking')
+    arg("-z", "--zip", action="store_true", help='run gzip on raw files (on cenpa-rocks)')
+    arg("-s", "--sync", action="store_true", help='sync DAQ with cenpa-rocks')
     args = vars(par.parse_args())
 
-    # # -------------------------
-    # overwrite = False
-    #
-    # # -- parse command line args --
-    # for i, opt in enumerate(argv):
-    #
-    #     if opt=="-ovr":
-    #         overwrite = True
-    #
-    #     if opt=="-crys":
-    #         sn = argv[i+1]
-    #         process_crystal(sn, overwrite)
-    #         exit()
-    #
-    #     if opt=="-zip":
-    #         zip_data()
-    #         exit()
-    #
-    #     if opt=="-sync":
-    #         sync_data()
-    #         exit()
-    #
-    # # default: run all crystals we haven't already processed
-    # sns = [id for id in runDB.keys() if "UW" in id]
-    # for sn in sns:
-    #     process_crystal(sn, overwrite)
+    # -- set parameters --
+    crys_sn, overwrite = None, False
+
+    if args["crys"]:
+        crys_sn = args["crys"]
+
+    if args["over"]:
+        overwrite = args["over"]
+
+    # -- run analysis --
+    if args["proc"]:
+        sn = args["proc"]
+        process_crystal(sn, overwrite)
+
+    if args["all"]:
+        all_sns = [k for k in runDB if "SN" in k]
+        for sn in all_sns:
+            process_crystal(sn, overwrite)
+
+    if args["sync"]:
+        sync_data()
+
+    if args["zip"]:
+        sn = args["zip"]
+        zip_data(sn, overwrite)
 
 
 def process_crystal(sn, overwrite=False):
@@ -187,12 +183,17 @@ def process_crystal(sn, overwrite=False):
 
 def sync_data():
     """
-    if test is True, print the commands that we would use
-    but don't actually execute them
+    rsync between DAQ machine and cenpa-rocks
     """
-    print('hi')
     print("rsync dir1 dir2")
-    # sh("rsync dir1 dir2")
+
+    # "raw_path":"/Users/ccenpa/Desktop/coherent/ORCA Experiments",
+    # "built_path":"/Users/ccenpa/Data",
+    # "rocks_analysis":"/home/coherent/analysis/crystal_char",
+    # "rocks_primary":"/data/COHERENT",
+    # "rocks_data1":"/data/COHERENT/data/CrystalChar",
+    # "rocks_data2":"/data/COHERENT2/data/CrystalChar",
+
 
 
 def zip_data():
@@ -220,10 +221,6 @@ def zip_data():
 
     # OK, rocks_data1 is ready for gzipping / cleaning raw files.  'root' folder needs cleanup
     # OK, rocks_data2 is ready for gzipping / cleaning raw files.  'root' folder is empty
-
-
-
-
 
 
 def sh(cmd, sh=False):
