@@ -2,8 +2,13 @@
 import sys, os, glob, json, time
 import pathlib
 import datetime
+import argparse
 from pprint import pprint
 from shutil import move
+import time
+import datetime as datetime
+import numpy as np
+from sense_hat import SenseHat
 
 def main(argv):
     """
@@ -14,6 +19,8 @@ def main(argv):
     Usage:
     $ python auto_process.py [options]
         default (no arguments): process all runs on this computer
+        -temp
+        -zip : run on cenpa-rocks and gzip all unzipped raw files
         -crys [serial no]: process data from a particular crystal
         -sync : upload data to cenpa-rocks and delete the raw ORCA files
         -ovr : overwrite ROOT output files
@@ -23,23 +30,40 @@ def main(argv):
     with open("runDB.json") as f:
         runDB = json.load(f)
 
-    overwrite = False
+    # -- parse args --
+    par = argparse.ArgumentParser(description="coherent crystal characterization suite")
+    arg = par.add_argument
+    arg("-o", "--ovr", action="store_true", help="overwrite existing files")
+    arg("-c", "--crys", type=str, help="set crystal S/N")
 
-    # -- parse command line args --
-    for i, opt in enumerate(argv):
+    args = vars(par.parse_args())
 
-        if opt=="-ovr":
-            overwrite = True
-
-        if opt=="-crys":
-            sn = argv[i+1]
-            process_crystal(sn, overwrite)
-            exit()
-
-    # default: run all crystals we haven't already processed
-    sns = [id for id in runDB.keys() if "UW" in id]
-    for sn in sns:
-        process_crystal(sn, overwrite)
+    # # -------------------------
+    # overwrite = False
+    #
+    # # -- parse command line args --
+    # for i, opt in enumerate(argv):
+    #
+    #     if opt=="-ovr":
+    #         overwrite = True
+    #
+    #     if opt=="-crys":
+    #         sn = argv[i+1]
+    #         process_crystal(sn, overwrite)
+    #         exit()
+    #
+    #     if opt=="-zip":
+    #         zip_data()
+    #         exit()
+    #
+    #     if opt=="-sync":
+    #         sync_data()
+    #         exit()
+    #
+    # # default: run all crystals we haven't already processed
+    # sns = [id for id in runDB.keys() if "UW" in id]
+    # for sn in sns:
+    #     process_crystal(sn, overwrite)
 
 
 def process_crystal(sn, overwrite=False):
@@ -146,17 +170,60 @@ def process_crystal(sn, overwrite=False):
                 folder_name = "{}_V".format(test_val)
 
             cmd = "mv {} {}/{}/{}/{}/{}".format(out_file,
-                  runDB["built_path"],sn, run_type,folder_name, out_file)
+                  runDB["built_path"], sn, run_type,folder_name, out_file)
 
             print(cmd)
             sh(cmd)
 
     # add a last check that we have all files we expect
-    # if so, let's do the sync option and upload to cenpa-rocks
+    print("Listing output files:")
+    sh("find {}/{}".format(runDB["built_path"], sn))
+
+    # TODO: if the sync option is set, upload to cenpa-rocks and delete the raw files
 
     now = datetime.datetime.now()
     print("Processing is up to date!", now.strftime("%Y-%m-%d %H:%M"))
-    # os.chdir(cwd)
+
+
+def sync_data():
+    """
+    if test is True, print the commands that we would use
+    but don't actually execute them
+    """
+    print('hi')
+    print("rsync dir1 dir2")
+    # sh("rsync dir1 dir2")
+
+
+def zip_data():
+    """
+    notes:
+    - rocks_primary contains old data, special coherent ROOT and G4, and folders for users
+    - rocks_data1 and 2 contain subfolders: "raw" and "root"
+        "root" has subfolders matching the crystal S/N.
+        "raw" does NOT have subfolders.
+    - We're mainly going to work in the COHERENT2 space for now.
+
+    NOTE: this is the part of auto_process that is executed via cron:
+    $ [login as coherent to cenpa-rocks]
+    $ crontab -e
+    * * * * * ~/analysis/crystal_char/task.sh >> ~/analysis/crystal_char/logs/cron.log 2>&1
+    (then change the *'s to be an appropriate time interval, say 4 hours)
+    """
+    import time
+    print("hi", time.time())
+
+    # "rocks_analysis":"/home/coherent/analysis/crystal_char",
+    # "rocks_primary":"/data/COHERENT",
+    # "rocks_data1":"/data/COHERENT/data/CrystalChar",
+    # "rocks_data2":"/data/COHERENT2/data/CrystalChar",
+
+    # OK, rocks_data1 is ready for gzipping / cleaning raw files.  'root' folder needs cleanup
+    # OK, rocks_data2 is ready for gzipping / cleaning raw files.  'root' folder is empty
+
+
+
+
 
 
 def sh(cmd, sh=False):
@@ -165,6 +232,27 @@ def sh(cmd, sh=False):
     import subprocess as sp
     if not sh: sp.call(shlex.split(cmd))  # "safe"
     else: sp.call(cmd, shell=sh)  # "less safe"
+
+
+def measure_temp():
+    sense = SenseHat()
+    epoch = datetime.datetime(1970,1,1,0,0,0)
+    mins = [1, 2, 3, 4, 5, 6]
+    temperature_data = []
+
+
+def get_temperatures(sn):
+    for min in mins:
+        curr_temp = sense.get_temperature()
+        curr_time = datetime.utcnow()
+        curr = (curr_time, curr_temp)
+        temperature_data.append(curr)
+        #timestamp = (curr_time - epoch).total_seconds()
+        time.sleep(60)
+
+        f = open('temperature_data_{}.txt'.format(sn),'w')
+        f.write(temperature_data)
+        f.close()
 
 
 if __name__=="__main__":

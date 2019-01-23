@@ -5,6 +5,11 @@
   "raw_path":"/Users/ccenpa/Desktop/coherent/ORCA Experiments",
   "built_path":"/Users/ccenpa/Data",
 
+  "rocks_analysis":"/home/coherent/analysis/crystal_char",
+  "rocks_primary":"/data/COHERENT",
+  "rocks_data1":"/data/COHERENT/data/CrystalChar",
+  "rocks_data2":"/data/COHERENT2/data/CrystalChar",
+
   "HV_vals":[600, 700, 800, 900, 1000],
   "pos_vals":[1, 2, 3, 4, 5],
 
@@ -15,5 +20,17 @@
   "UW003":{
     "Voltage":[2721, 2722, 2726, 2727, 2728],
     "Position":[2729, 2730, 2731, 2732, 2733]
+  },
+  "SN00190":{
+    "Voltage":[2735,2736,2737,2738,2740],
+    "Position":[2741,2742,2743,2744,2745]
+  },
+  "SN0070":{
+    "Voltage":[2746,2747,2748,2749,2750],
+    "Position":[2751,2752,2753,2754,2755]
+  },
+  "SN9999":{
+    "Voltage":[],
+    "Position":[]
   }
 }
