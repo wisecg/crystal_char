@@ -207,9 +207,6 @@ def sync_data():
     built_loc = "{}/".format(runDB["built_path"])
     built_rocks = "{}:{}/".format(runDB["rocks_login"], runDB["rocks_built"])
 
-    print(built_loc)
-    print(built_rocks)
-
     # run rsync for built data
     cmd = "rsync -av {} {}".format(built_loc, built_rocks)
     print("Syncing built data directories ...\n",cmd)
@@ -239,7 +236,7 @@ def sync_data():
             print("whoa, ", fname, "not found in remote list!")
             exit()
 
-    print("All raw files in:\n    {}\n    {}\nhave been backed up to cenpa-rocks."
+    print("All files in:\n    {}\n    {}\nhave been backed up to cenpa-rocks."
           .format(runDB["raw_path"], runDB["built_path"]))
     print("It should be OK to delete local files.")
 
