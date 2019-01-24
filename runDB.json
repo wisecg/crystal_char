@@ -5,10 +5,12 @@
   "raw_path":"/Users/ccenpa/Desktop/coherent/ORCA Experiments",
   "built_path":"/Users/ccenpa/Data",
 
+  "rocks_login":"coherent@cenpa-rocks.npl.washington.edu",
   "rocks_analysis":"/home/coherent/analysis/crystal_char",
   "rocks_primary":"/data/COHERENT",
   "rocks_data1":"/data/COHERENT/data/CrystalChar",
   "rocks_data2":"/data/COHERENT2/data/CrystalChar",
+  "rocks_built":"/data/COHERENT2/data/CrystalChar/root",
 
   "HV_vals":[600, 700, 800, 900, 1000],
   "pos_vals":[1, 2, 3, 4, 5],

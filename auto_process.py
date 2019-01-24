@@ -3,6 +3,7 @@ import sys, os, glob, json, time
 import pathlib
 import datetime
 import argparse
+import subprocess as sp
 from pprint import pprint
 from shutil import move
 import time
@@ -28,7 +29,7 @@ def main(argv):
     arg = par.add_argument
     arg("-c", "--crys", type=str, help="set crystal S/N")
     arg("-p", "--proc", type=str, help="process a crystal")
-    arg("-a", "--all", type=str, help="process all crystals in the DB")
+    arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
     arg("-t", "--temp", action="store_true", help='start temperature data taking')
     arg("-z", "--zip", action="store_true", help='run gzip on raw files (on cenpa-rocks)')
@@ -183,17 +184,80 @@ def process_crystal(sn, overwrite=False):
 
 def sync_data():
     """
+    to run: `python auto_process.py -s`
     rsync between DAQ machine and cenpa-rocks
     """
-    print("rsync dir1 dir2")
+    if "DAQ" not in os.environ:
+        print("Error, we're not on the CENPA DAQ machine.  Exiting...")
+        exit()
 
-    # "raw_path":"/Users/ccenpa/Desktop/coherent/ORCA Experiments",
-    # "built_path":"/Users/ccenpa/Data",
-    # "rocks_analysis":"/home/coherent/analysis/crystal_char",
-    # "rocks_primary":"/data/COHERENT",
-    # "rocks_data1":"/data/COHERENT/data/CrystalChar",
-    # "rocks_data2":"/data/COHERENT2/data/CrystalChar",
+    print("Syncing data ...")
 
+    # raw data
+    raw_path = runDB["raw_path"].replace(" ", "\ ")
+    raw_loc = "{}/".format(raw_path)
+    raw_rocks = "{}:{}/".format(runDB["rocks_login"], runDB["rocks_data2"])
+
+    # run rsync for raw data (can take a while ...)
+    cmd = "rsync -av {} {}".format(raw_loc, raw_rocks)
+    print("Syncing raw data directories ...\n",cmd)
+    sh(cmd)
+
+    # -- built data
+    built_loc = "{}/".format(runDB["built_path"])
+    built_rocks = "{}:{}/".format(runDB["rocks_login"], runDB["rocks_built"])
+
+    print(built_loc)
+    print(built_rocks)
+
+    # run rsync for built data
+    cmd = "rsync -av {} {}".format(built_loc, built_rocks)
+    print("Syncing built data directories ...\n",cmd)
+    sh(cmd)
+
+    # make sure every (raw and built) local file is found on cenpa-rocks
+
+    # local list
+    r_list = glob.glob(runDB["raw_path"] + "/**", recursive=True)
+    b_list = glob.glob(runDB["built_path"] + "/**", recursive=True)
+    f_list = r_list + b_list
+
+    # remote list
+    ls = sp.Popen(['ssh', runDB["rocks_login"], 'ls -R {}'.format(runDB["rocks_data2"])],
+                  stdout=sp.PIPE, stderr=sp.PIPE)
+    out, err = ls.communicate()
+    out = out.decode('utf-8')
+    remote_list = out.split("\n")
+    remote_list = [r for r in remote_list if ":" not in r and len(r)!=0]
+
+    # make sure all files have successfully transferred
+    for f in f_list:
+        fname = f.split("/")[-1]
+        if len(fname) == 0:
+            continue
+        if fname not in remote_list:
+            print("whoa, ", fname, "not found in remote list!")
+            exit()
+
+    print("All raw files in:\n    {}\n    {}\nhave been backed up to cenpa-rocks."
+          .format(runDB["raw_path"], runDB["built_path"]))
+    print("It should be OK to delete local files.")
+
+    # don't delete these files, orca needs them
+    ignore_list = [".Orca", "RunNumber"]
+
+    # now delete old files, ask for Y/N confirmation
+    print("OK to delete local files? [Y/N]")
+    if input() == "Y":
+        for f in f_list:
+            f.replace(" ", "\ ")
+            if os.path.isfile(f):
+                if any(ig in f for ig in ignore_list):
+                    continue
+                os.remove(f)
+
+    now = datetime.datetime.now()
+    print("Processing is up to date!", now.strftime("%Y-%m-%d %H:%M"))
 
 
 def zip_data():
