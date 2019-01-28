@@ -1,26 +1,31 @@
 ## README
 
-all code is in:
-```~/analysis/crystal_char```
+All code is in:
+```~/analysis/crystal_char
+```
 
-open up a terminal and `cd` to that directory
-```cd ~/analysis/crystal_char```
+Open up a terminal and `cd` to that directory
+```cd ~/analysis/crystal_char
+```
 
-very soon we will have temperature monitoring.
+Very soon we will have temperature monitoring.
 when it’s ready, you’ll do:
-```python auto_process.py —temp```
+```python auto_process.py —temp
+```
 to enable temp logging while ORCA is taking data for this crystal.
 
 for each crystal,
 record serial number (“SNXXXXX”)
 take 10 runs  (5 position, 5 voltage)
 enter run numbers and serial number into runDB.json:
-```atom runDB.json```
+```atom runDB.json
+```
 
-then do:
-```python auto_process.py -p [SN]```
-this creates a folder called [SN] in runDB[“built_path”]
-—> make sure you know what I mean by that!
+Then do:
+```python auto_process.py -p [SN]
+```
+This creates a folder called [SN] in runDB[“built_path”]
+(make sure you know what I mean by that!)
 
 run the Calibration code:
 ```cd ~/analysis/crystal_char/calibration
