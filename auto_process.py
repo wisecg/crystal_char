@@ -15,15 +15,18 @@ import numpy as np
 def main(argv):
     """
     Automatic processing of COHERENT NaI(Tl) crystal data.
-    Uses "runDB.json" as a database.  When a crystal is scanned,
+    Uses "crysDB.json" as a database.  When a crystal is scanned,
     we input its serial number and run numbers to the database,
     and run this code to process the data and handle the output files.
     For usage help, run: $ python auto_process.py -h
+
+    TODO:
+    - run number checker (verify all expected runs exist & files are OK)
     """
     # -- load our run database and make it global --
-    global runDB
-    with open("runDB.json") as f:
-        runDB = json.load(f)
+    global crysDB
+    with open("crysDB.json") as f:
+        crysDB = json.load(f)
 
     # -- parse args --
     par = argparse.ArgumentParser(description="coherent crystal characterization suite")
@@ -52,7 +55,7 @@ def main(argv):
         process_crystal(sn, overwrite)
 
     if args["all"]:
-        all_sns = [k for k in runDB if "SN" in k]
+        all_sns = [k for k in crysDB if "SN" in k]
         for sn in all_sns:
             process_crystal(sn, overwrite)
 
@@ -71,16 +74,16 @@ def process_crystal(sn, overwrite=False):
     """
     print("Processing crystal:", sn)
 
-    if sn not in runDB.keys():
+    if sn not in crysDB.keys():
         print("Crystal {} not found! Exiting ...".format(sn))
         exit()
 
     # get a list of all raw files on this computer
-    fstr = runDB["raw_path"]
+    fstr = crysDB["raw_path"]
     raw_files = list(set(glob.glob("{}/**/**/Data/*Run*".format(fstr), recursive=True)))
 
     # get a list of all processed (built) run numbers on this computer
-    built_files = list(set(glob.glob("{}/{}/*".format(runDB["built_path"], sn), recursive=True)))
+    built_files = list(set(glob.glob("{}/{}/*".format(crysDB["built_path"], sn), recursive=True)))
     built_runs = []
     for f in built_files:
         if "OR_run" not in f:
@@ -91,11 +94,11 @@ def process_crystal(sn, overwrite=False):
 
     # get a list of run numbers for this crystal from our JSON file
     crys_runs = []
-    for run_type in runDB[sn]:
-        crys_runs.extend(runDB[sn][run_type])
+    for run_type in crysDB[sn]:
+        crys_runs.extend(crysDB[sn][run_type])
 
-    test_vals = {"Position":runDB["pos_vals"],
-                 "Voltage":runDB["HV_vals"]}
+    test_vals = {"Position":crysDB["pos_vals"],
+                 "Voltage":crysDB["HV_vals"]}
 
     print("Run list:", crys_runs, "\nTest vals:")
     pprint(test_vals)
@@ -103,11 +106,11 @@ def process_crystal(sn, overwrite=False):
     # -- create the directory of folders needed by the Calibration code. --
     # if the directory already exists, preserve any files already there.
     for pos in range(1,6):
-        path = "{}/{}/Position/position_{}".format(runDB["built_path"], sn, pos)
+        path = "{}/{}/Position/position_{}".format(crysDB["built_path"], sn, pos)
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     for vol in [600, 700, 800, 900, 1000]:
-        path = "{}/{}/Voltage/{}_V".format(runDB["built_path"], sn, vol)
+        path = "{}/{}/Voltage/{}_V".format(crysDB["built_path"], sn, vol)
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     # -- loop over the raw files --
@@ -150,12 +153,12 @@ def process_crystal(sn, overwrite=False):
         #     exit()
 
         # now figure out which folder to move it to
-        for run_type in runDB[sn]:
+        for run_type in crysDB[sn]:
 
-            dest_folder = runDB["built_path"]
+            dest_folder = crysDB["built_path"]
 
             # get the index value
-            idxs = [i for i, x in enumerate(runDB[sn][run_type]) if x==run]
+            idxs = [i for i, x in enumerate(crysDB[sn][run_type]) if x==run]
             if len(idxs) < 1:
                 continue
             idx = idxs[0]
@@ -168,14 +171,14 @@ def process_crystal(sn, overwrite=False):
                 folder_name = "{}_V".format(test_val)
 
             cmd = "mv {} {}/{}/{}/{}/{}".format(out_file,
-                  runDB["built_path"], sn, run_type,folder_name, out_file)
+                  crysDB["built_path"], sn, run_type,folder_name, out_file)
 
             print(cmd)
             sh(cmd)
 
     # add a last check that we have all files we expect
     print("Listing output files:")
-    sh("find {}/{}".format(runDB["built_path"], sn))
+    sh("find {}/{}".format(crysDB["built_path"], sn))
 
     # TODO: if the sync option is set, upload to cenpa-rocks and delete the raw files
 
@@ -195,9 +198,9 @@ def sync_data():
     print("Syncing data ...")
 
     # raw data
-    raw_path = runDB["raw_path"].replace(" ", "\ ")
+    raw_path = crysDB["raw_path"].replace(" ", "\ ")
     raw_loc = "{}/".format(raw_path)
-    raw_rocks = "{}:{}/".format(runDB["rocks_login"], runDB["rocks_data2"])
+    raw_rocks = "{}:{}/".format(crysDB["rocks_login"], crysDB["rocks_data2"])
 
     # run rsync for raw data (can take a while ...)
     cmd = "rsync -av {} {}".format(raw_loc, raw_rocks)
@@ -205,8 +208,8 @@ def sync_data():
     sh(cmd)
 
     # -- built data
-    built_loc = "{}/".format(runDB["built_path"])
-    built_rocks = "{}:{}/".format(runDB["rocks_login"], runDB["rocks_built"])
+    built_loc = "{}/".format(crysDB["built_path"])
+    built_rocks = "{}:{}/".format(crysDB["rocks_login"], crysDB["rocks_built"])
 
     # run rsync for built data
     cmd = "rsync -av {} {}".format(built_loc, built_rocks)
@@ -216,12 +219,12 @@ def sync_data():
     # make sure every (raw and built) local file is found on cenpa-rocks
 
     # local list
-    r_list = glob.glob(runDB["raw_path"] + "/**", recursive=True)
-    b_list = glob.glob(runDB["built_path"] + "/**", recursive=True)
+    r_list = glob.glob(crysDB["raw_path"] + "/**", recursive=True)
+    b_list = glob.glob(crysDB["built_path"] + "/**", recursive=True)
     f_list = r_list + b_list
 
     # remote list
-    ls = sp.Popen(['ssh', runDB["rocks_login"], 'ls -R {}'.format(runDB["rocks_data2"])],
+    ls = sp.Popen(['ssh', crysDB["rocks_login"], 'ls -R {}'.format(crysDB["rocks_data2"])],
                   stdout=sp.PIPE, stderr=sp.PIPE)
     out, err = ls.communicate()
     out = out.decode('utf-8')
@@ -238,7 +241,7 @@ def sync_data():
             exit()
 
     print("All files in:\n    {}\n    {}\nhave been backed up to cenpa-rocks."
-          .format(runDB["raw_path"], runDB["built_path"]))
+          .format(crysDB["raw_path"], crysDB["built_path"]))
     print("It should be OK to delete local files.")
 
     # don't delete these files, orca needs them
@@ -267,7 +270,7 @@ def zip_data(overwrite=False):
     * * * * * ~/analysis/crystal_char/task.sh >> ~/analysis/crystal_char/logs/cron.log 2>&1
     (then change the *'s to be an appropriate time interval, say 4 hours)
     """
-    raw_rocks = "{}/".format(runDB["rocks_data2"])
+    raw_rocks = "{}/".format(crysDB["rocks_data2"])
     print(raw_rocks)
 
     all_files = glob.glob(raw_rocks + "/**", recursive=True)
