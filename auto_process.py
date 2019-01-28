@@ -3,6 +3,7 @@ import sys, os, glob, json, time
 import pathlib
 import datetime
 import argparse
+import shlex
 import subprocess as sp
 from pprint import pprint
 from shutil import move
@@ -59,8 +60,8 @@ def main(argv):
         sync_data()
 
     if args["zip"]:
-        sn = args["zip"]
-        zip_data(sn, overwrite)
+        # clean_gzip()
+        zip_data(overwrite)
 
 
 def process_crystal(sn, overwrite=False):
@@ -257,31 +258,72 @@ def sync_data():
     print("Processing is up to date!", now.strftime("%Y-%m-%d %H:%M"))
 
 
-def zip_data():
+def zip_data(overwrite=False):
     """
-    notes:
-    - rocks_primary contains old data, special coherent ROOT and G4, and folders for users
-    - rocks_data1 and 2 contain subfolders: "raw" and "root"
-        "root" has subfolders matching the crystal S/N.
-        "raw" does NOT have subfolders.
-    - We're mainly going to work in the COHERENT2 space for now.
-
+    to run: `python auto_process.py -z`
     NOTE: this is the part of auto_process that is executed via cron:
     $ [login as coherent to cenpa-rocks]
     $ crontab -e
     * * * * * ~/analysis/crystal_char/task.sh >> ~/analysis/crystal_char/logs/cron.log 2>&1
     (then change the *'s to be an appropriate time interval, say 4 hours)
     """
-    import time
-    print("hi", time.time())
+    raw_rocks = "{}/".format(runDB["rocks_data2"])
+    print(raw_rocks)
 
-    # "rocks_analysis":"/home/coherent/analysis/crystal_char",
-    # "rocks_primary":"/data/COHERENT",
-    # "rocks_data1":"/data/COHERENT/data/CrystalChar",
-    # "rocks_data2":"/data/COHERENT2/data/CrystalChar",
+    all_files = glob.glob(raw_rocks + "/**", recursive=True)
 
-    # OK, rocks_data1 is ready for gzipping / cleaning raw files.  'root' folder needs cleanup
-    # OK, rocks_data2 is ready for gzipping / cleaning raw files.  'root' folder is empty
+    for f_name in all_files:
+
+        # if it has "Run", no file extension, and ends in a number,
+        # it's an ORCA raw file.  brilliant
+        f = f_name.split("/")[-1]
+        if not("Run" in f and "." not in f and "RunNumber" not in f):
+            continue
+        raw_file = f_name
+
+        # grab the run number
+        run_num = int(f.split("Run")[-1])
+
+        # check for already existing .tar.gz files for this run
+        t_idx = [i for i,x in enumerate(all_files) if "Run{}.tar.gz".format(run_num) in x]
+
+        # if a .tar.gz file exists for this run, check its integrity
+        # before deleting the raw file
+        for idx in t_idx:
+            tar_file = all_files[idx]
+            p = sp.Popen(["gunzip","-t",tar_file], stdout=sp.PIPE, stderr=sp.PIPE)
+            out, err = p.communicate()
+            if err is None:
+                print("Zipped file passes checks. Deleting raw file:\n    ", raw_file)
+                # os.remove(raw_file)
+            else:
+                print("Zipped file failed checks.  Deleting zipped file:\n    ", tar_file)
+                # os.remove(tar_file)
+
+        # compress the file
+        this_dir = os.getcwd()
+        dest_dir = "/".join(f_name.split("/")[:-1])
+        os.chdir(dest_dir)
+        cmd = "tar cvzf {}.tar.gz {} --remove-files".format(f, f)
+        print("Zipping file:", cmd)
+        sh(cmd)
+        os.chdir(this_dir)
+
+        # exit()
+
+
+def clean_gzip():
+    """
+    oops, i gzipped when i should have tar'd. clean it up
+    """
+    this_dir = os.getcwd()
+    os.chdir("/data/COHERENT2/data/CrystalChar/raw")
+    all_files = glob.glob("./**", recursive=True)
+    for f in all_files:
+        if ".gz" in f and "tar" not in f:
+            print(f)
+            sh("gunzip " + f)
+    os.chdir(this_dir)
 
 
 def sh(cmd, sh=False):
