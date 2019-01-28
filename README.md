@@ -25,7 +25,8 @@ this creates a folder called [SN] in runDB[“built_path”]
 
 run the Calibration code
 ```cd ~/analysis/crystal_char/calibration
-./Calibration [path to built directory with SN] [option - pos, volt]```
+./Calibration [path to built directory with SN] [option - pos, volt]
+```
 
 For the plots that have to be manually saved,
 save them to the built directory that you just created, i.e. runDB[“built_path”] + [SN]
@@ -35,7 +36,8 @@ Verify that the files in the built directory are what you expect.
 
 Run the sync to cenpa-rocks and remove both the raw and built files from this machine:
 ```cd ~/analysis/crystal_char
-python auto_process.py -s```
+python auto_process.py -s
+```
 
 — for help w/ auto_process, or any other code: —
 1. actually look at the code!  `atom ~/analysis/crystal_char/auto_process.py`
@@ -51,7 +53,8 @@ this can be done via command line:
 ```git pull
 git add .
 git commit -m “very brief message describing my changes”
-git push```
+git push
+```
 
 *ideally, every time runDB.json is updated, you should commit.
-for now, clint will probably just do this once a week.
+for now, Clint will probably just do this once a week.
