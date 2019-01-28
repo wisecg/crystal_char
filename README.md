@@ -1,16 +1,19 @@
 ## README
 
 All code is in:
-```~/analysis/crystal_char
+```
+~/analysis/crystal_char
 ```
 
 Open up a terminal and `cd` to that directory
-```cd ~/analysis/crystal_char
+```
+cd ~/analysis/crystal_char
 ```
 
 Very soon we will have temperature monitoring.
 when it’s ready, you’ll do:
-```python auto_process.py —temp
+```
+python auto_process.py —temp
 ```
 to enable temp logging while ORCA is taking data for this crystal.
 
@@ -18,17 +21,20 @@ for each crystal,
 record serial number (“SNXXXXX”)
 take 10 runs  (5 position, 5 voltage)
 enter run numbers and serial number into runDB.json:
-```atom runDB.json
+```
+atom runDB.json
 ```
 
 Then do:
-```python auto_process.py -p [SN]
+```
+python auto_process.py -p [SN]
 ```
 This creates a folder called [SN] in runDB[“built_path”]
 (make sure you know what I mean by that!)
 
 run the Calibration code:
-```cd ~/analysis/crystal_char/calibration
+```
+cd ~/analysis/crystal_char/calibration
 ./Calibration [path to built directory with SN] [option - pos, volt]
 ```
 For the plots that have to be manually saved,
@@ -38,7 +44,8 @@ Verify that the files in the built directory are what you expect.
 (cd to that directory and look!)
 
 Run the sync to cenpa-rocks and remove both the raw and built files from this machine:
-```cd ~/analysis/crystal_char
+```
+cd ~/analysis/crystal_char
 python auto_process.py -s
 ```
 
@@ -53,7 +60,8 @@ python auto_process.py -s
 if you make changes to any software: GOOD!  we want your input.
 but you have to `git commit` them so that we can track what you’ve done.
 this can be done via command line:
-```git pull
+```
+git pull
 git add .
 git commit -m “very brief message describing my changes”
 git push
