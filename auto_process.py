@@ -271,10 +271,11 @@ def zip_data(overwrite=False):
     (then change the *'s to be an appropriate time interval, say 4 hours)
     """
     raw_rocks = "{}/".format(crysDB["rocks_data2"])
-    print(raw_rocks)
 
+    print("Getting file list ...")
     all_files = glob.glob(raw_rocks + "/**", recursive=True)
 
+    print("Scanning files ...")
     for f_name in all_files:
 
         # if it has "Run", no file extension, and ends in a number,
@@ -294,6 +295,7 @@ def zip_data(overwrite=False):
         # before deleting the raw file
         for idx in t_idx:
             tar_file = all_files[idx]
+            print("Found tar file and raw file for run", run_num, "running gunzip")
             p = sp.Popen(["gunzip","-t",tar_file], stdout=sp.PIPE, stderr=sp.PIPE)
             out, err = p.communicate()
             if err is None:
