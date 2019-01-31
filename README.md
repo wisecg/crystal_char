@@ -17,10 +17,9 @@ python auto_process.py —temp
 ```
 to enable temp logging while ORCA is taking data for this crystal.
 
-for each crystal,
-record serial number (“SNXXXXX”)
-take 10 runs  (5 position, 5 voltage)
-enter run numbers and serial number into runDB.json:
+For each crystal, record the serial number (“SNXXXXX”).
+
+Take 10 runs (5 position, 5 voltage), and enter run numbers and serial number into runDB.json:
 ```
 atom runDB.json
 ```
