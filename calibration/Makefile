@@ -1,7 +1,7 @@
 SOURCES = $(wildcard *.cc)
 OBJECTS = $(SOURCES:.c=.o)
 
-.PHONY: all clean 
+.PHONY: all clean
 
 all: Calibration
 
@@ -13,4 +13,3 @@ Calibration: $(OBJECTS)
 
 clean:
 	rm -f Calibration *.o dict.cc *.pcm *.rootmap *.dylib
-

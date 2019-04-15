@@ -2,3 +2,4 @@ getSpectrum
 logs/*
 *.root
 calibration/Calibration
+.DS_Store
