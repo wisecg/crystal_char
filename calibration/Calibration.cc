@@ -93,7 +93,7 @@ vector<PeakFinder*> ANALYZERS;
 Int_t Calibration(string path, string mode, string option) {
 
 	//gStyle->SetOptFit(1111); // displays more statistics
-	cout << "Collecting Data..." << endl;
+	cout << "Collecting ROOT Data..." << endl;
 	vector<string> filepaths;
 	vector<TChain*> DATA;
 	vector<Int_t> POSITIONS;
