@@ -5,12 +5,12 @@ import datetime
 import argparse
 import shlex
 import subprocess as sp
+import sys
 from pprint import pprint
 from shutil import move
 import time
 import datetime as datetime
 import numpy as np
-# from sense_hat import SenseHat
 
 def main(argv):
     """
@@ -33,9 +33,9 @@ def main(argv):
     arg = par.add_argument
     arg("-c", "--crys", type=str, help="set crystal S/N")
     arg("-p", "--proc", type=str, help="process a crystal")
+    arg("-t", "--temp", type=str, help='start temperature data taking')
     arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
-    arg("-t", "--temp", action="store_true", help='start temperature data taking')
     arg("-z", "--zip", action="store_true", help='run gzip on raw files (on cenpa-rocks)')
     arg("-s", "--sync", action="store_true", help='sync DAQ with cenpa-rocks')
     args = vars(par.parse_args())
@@ -65,6 +65,10 @@ def main(argv):
     if args["zip"]:
         # clean_gzip()
         zip_data(overwrite)
+
+    if args["temp"]:
+        crys_sn = args["crys"]
+        measure_temp(crys_sn)
 
 
 def process_crystal(sn, overwrite=False):
@@ -339,26 +343,12 @@ def sh(cmd, sh=False):
     else: sp.call(cmd, shell=sh)  # "less safe"
 
 
-def measure_temp():
-    sense = SenseHat()
-    epoch = datetime.datetime(1970,1,1,0,0,0)
-    mins = [1, 2, 3, 4, 5, 6]
-    temperature_data = []
-
-
-def get_temperatures(sn):
-    for min in mins:
-        curr_temp = sense.get_temperature()
-        curr_time = datetime.utcnow()
-        curr = (curr_time, curr_temp)
-        temperature_data.append(curr)
-        #timestamp = (curr_time - epoch).total_seconds()
-        time.sleep(60)
-
-        f = open('temperature_data_{}.txt'.format(sn),'w')
-        f.write(temperature_data)
-        f.close()
-
+def measure_temp(sn):
+    runinfo = open("runinfo.txt", "w")
+    runinfo.write(sn)
+    runinfo.close()
+    sp.open("scp runinfo.txt pi@10.66.193.80:~/coherent/temp_study", shell=True)
+    sp.open("ssh pi@10.66.193.80 'cd ~/coherent/temp_study && python take_temp.py'", shell=True)
 
 if __name__=="__main__":
     main(sys.argv[1:])
