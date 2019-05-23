@@ -10,7 +10,6 @@ from shutil import move
 import time
 import datetime as datetime
 import numpy as np
-# from sense_hat import SenseHat
 
 def main(argv):
     """
@@ -35,7 +34,7 @@ def main(argv):
     arg("-p", "--proc", type=str, help="process a crystal")
     arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
-    arg("-t", "--temp", action="store_true", help='start temperature data taking')
+    arg("-t", "--temp", type=str, help='start temperature data taking')
     arg("-z", "--zip", action="store_true", help='run gzip on raw files (on cenpa-rocks)')
     arg("-s", "--sync", action="store_true", help='sync DAQ with cenpa-rocks')
     args = vars(par.parse_args())
@@ -66,6 +65,9 @@ def main(argv):
         # clean_gzip()
         zip_data(overwrite)
 
+    if args["temp"]:
+        crys_sn = args["crys"]
+        measure_temp(crys_sn)
 
 def process_crystal(sn, overwrite=False):
     """
@@ -106,7 +108,7 @@ def process_crystal(sn, overwrite=False):
     # -- create the directory of folders needed by the Calibration code. --
     # if the directory already exists, preserve any files already there.
     for pos in range(1,6):
-        path = "{}/{}/Position/position_{}".format(crysDB["built_path"], sn, pos)
+        path = "{}/{}/Position/Position_{}".format(crysDB["built_path"], sn, pos)
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     for vol in [600, 700, 800, 900, 1000]:
@@ -166,7 +168,7 @@ def process_crystal(sn, overwrite=False):
             test_val = test_vals[run_type][idx]
 
             if run_type == "Position":
-                folder_name = "position_{}".format(test_val)
+                folder_name = "Position_{}".format(test_val)
             elif run_type == "Voltage":
                 folder_name = "{}_V".format(test_val)
 
@@ -338,26 +340,12 @@ def sh(cmd, sh=False):
     if not sh: sp.call(shlex.split(cmd))  # "safe"
     else: sp.call(cmd, shell=sh)  # "less safe"
 
-
-def measure_temp():
-    sense = SenseHat()
-    epoch = datetime.datetime(1970,1,1,0,0,0)
-    mins = [1, 2, 3, 4, 5, 6]
-    temperature_data = []
-
-
-def get_temperatures(sn):
-    for min in mins:
-        curr_temp = sense.get_temperature()
-        curr_time = datetime.utcnow()
-        curr = (curr_time, curr_temp)
-        temperature_data.append(curr)
-        #timestamp = (curr_time - epoch).total_seconds()
-        time.sleep(60)
-
-        f = open('temperature_data_{}.txt'.format(sn),'w')
-        f.write(temperature_data)
-        f.close()
+def measure_temp(sn):
+    runinfo = open("runinfo.txt", "w")
+    runinfo.write(sn)
+    runinfo.close()
+    sp.Popen("scp runinfo.txt pi@10.66.193.80:~/temp_study", shell=True)
+    sp.Popen("ssh pi@10.66.193.80 'cd ~/tempstudy && source env/bin/activate && python3 short_run.py'", shell=True)
 
 
 if __name__=="__main__":
