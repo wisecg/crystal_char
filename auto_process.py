@@ -5,6 +5,7 @@ import datetime
 import argparse
 import shlex
 import subprocess as sp
+import sys
 from pprint import pprint
 from shutil import move
 import time
@@ -32,6 +33,7 @@ def main(argv):
     arg = par.add_argument
     arg("-c", "--crys", type=str, help="set crystal S/N")
     arg("-p", "--proc", type=str, help="process a crystal")
+    arg("-t", "--temp", type=str, help='start temperature data taking')
     arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
     arg("-t", "--temp", type=str, help='start temperature data taking')
