@@ -17,15 +17,14 @@ def main():
     sensor = adafruit_max31865.MAX31865(spi, cs, wires=3)
 
     # -- set parameters --
-    #runinfo = open("runinfo.txt", "r")
-    #sn = runinfo.read()
-    #runinfo.close()
+    runinfo = open("runinfo.txt", "r")
+    run_number = runinfo.read()
+    runinfo.close()
 
-    run_number = input("Run number: ")
     filename = 'run%s_temperature_data.txt' % (run_number)
     start_time = time.time()
     print('Start time: %s' % (time.ctime(start_time)))
-    print('Estimated end time: %s' % (time.ctime(start_time + 43200)))
+    print('Estimated end time: %s' % (time.ctime(start_time + 600)))
     save_path = '/home/pi/tempstudy/data/'
     file = save_path + filename
     f = open(file,'w')
@@ -36,12 +35,11 @@ def main():
 
 def get_temperatures(sensor, file):
     """
-    12 hours
-    720 minutes
-    1440 30 second intervals
+    10 minutes
+    600 seconds
     """
-    duration = 1440
-    interval = 30
+    duration = 660
+    interval = 1
     temperature_data = []
 
     for pos in range(1,duration):
