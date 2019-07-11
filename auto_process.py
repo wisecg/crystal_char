@@ -34,6 +34,7 @@ def main(argv):
     arg("-c", "--crys", type=str, help="set crystal S/N")
     arg("-p", "--proc", type=str, help="process a crystal")
     arg("-t", "--temp", type=str, help='start temperature data taking')
+    arg("-pt", "--printtemp", type=str, help='print current temperature')
     arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
     arg("-t", "--temp", type=str, help='start temperature data taking')
@@ -68,8 +69,11 @@ def main(argv):
         zip_data(overwrite)
 
     if args["temp"]:
-        crys_sn = args["crys"]
-        measure_temp(crys_sn)
+        run_num = args["temp"]
+        measure_temp(run_num)
+
+    if args["printtemp"]:
+        print_temp()
 
 def process_crystal(sn, overwrite=False):
     """
@@ -342,12 +346,17 @@ def sh(cmd, sh=False):
     if not sh: sp.call(shlex.split(cmd))  # "safe"
     else: sp.call(cmd, shell=sh)  # "less safe"
 
-def measure_temp(sn):
+
+def measure_temp(run_num):
     runinfo = open("runinfo.txt", "w")
-    runinfo.write(sn)
+    runinfo.write(run_num)
     runinfo.close()
-    sp.Popen("scp runinfo.txt pi@10.66.193.80:~/temp_study", shell=True)
-    sp.Popen("ssh pi@10.66.193.80 'cd ~/tempstudy && source env/bin/activate && python3 short_run.py'", shell=True)
+    sp.Popen("scp runinfo.txt pi@10.66.193.80:~/tempstudy", shell=True)
+    sp.Popen("ssh pi@10.66.193.80 'cd ~/tempstudy && source env/bin/activate && python3 characterization_run.py'", shell=True)
+
+
+def print_temp():
+    sp.Popen("ssh pi@10.66.193.80 'cd ~/tempstudy && source env/bin/activate && python3 print_temp.py'", shell=True)
 
 
 if __name__=="__main__":
