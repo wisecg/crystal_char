@@ -33,7 +33,6 @@ def main(argv):
     arg = par.add_argument
     arg("-c", "--crys", type=str, help="set crystal S/N")
     arg("-p", "--proc", type=str, help="process a crystal")
-    arg("-t", "--temp", type=str, help='start temperature data taking')
     arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
     arg("-t", "--temp", type=str, help='start temperature data taking')
@@ -70,6 +69,7 @@ def main(argv):
     if args["temp"]:
         crys_sn = args["crys"]
         measure_temp(crys_sn)
+
 
 def process_crystal(sn, overwrite=False):
     """
@@ -341,6 +341,7 @@ def sh(cmd, sh=False):
     import subprocess as sp
     if not sh: sp.call(shlex.split(cmd))  # "safe"
     else: sp.call(cmd, shell=sh)  # "less safe"
+
 
 def measure_temp(sn):
     runinfo = open("runinfo.txt", "w")
