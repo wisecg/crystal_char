@@ -69,6 +69,9 @@ def main(argv):
         zip_data(overwrite)
 
     if args["temp"]:
+    """
+    Run number should be the first run number entry (for 600V) in the ELOG.
+    """
         run_num = args["temp"]
         measure_temp(run_num)
 
