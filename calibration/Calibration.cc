@@ -960,8 +960,7 @@ Int_t Calibration(string path, string mode, string option) {
 			Measurement calibratedMaxEnergy = ANALYZERS[i]->calibrate(maxEnergy);
 			Int_t maxCalBin = (Int_t) (1.01 * calibratedMaxEnergy.val);
 
-			TH1D *calibrated = new TH1D(calName.c_str(), label.c_str(), 20e3,
-			                               0, maxCalBin);
+			TH1D *calibrated = new TH1D(calName.c_str(), label.c_str(), 20e3, 0, maxCalBin);
 			calibrated->SetLineColor(i+1);
 			if (i == 4) {
 				calibrated->SetLineColor(i+2);

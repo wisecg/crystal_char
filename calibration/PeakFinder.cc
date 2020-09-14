@@ -83,6 +83,7 @@ Returns:
 	this->channel = channel;
 
 	Int_t numBins = 16384; // 2^14
+  // Int_t numBins = 12000; // edit by clint to improve 600V run
 	TCanvas *tempCanvas = new TCanvas("tempCanvas", "tempCanvas");
 	gPad->SetLogy();
 

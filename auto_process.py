@@ -37,7 +37,6 @@ def main(argv):
     arg("-pt", "--printtemp", type=str, help='print current temperature')
     arg("-a", "--all", action="store_true", help="process all crystals in the DB")
     arg("-o", "--over", action="store_true", help="overwrite existing files")
-    arg("-t", "--temp", type=str, help='start temperature data taking')
     arg("-z", "--zip", action="store_true", help='run gzip on raw files (on cenpa-rocks)')
     arg("-s", "--sync", action="store_true", help='sync DAQ with cenpa-rocks')
     args = vars(par.parse_args())
@@ -69,9 +68,9 @@ def main(argv):
         zip_data(overwrite)
 
     if args["temp"]:
-    """
-    Run number should be the first run number entry (for 600V) in the ELOG.
-    """
+        """
+        Run number should be the first run number entry (for 600V) in the ELOG.
+        """
         run_num = args["temp"]
         measure_temp(run_num)
 
